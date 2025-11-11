@@ -411,7 +411,7 @@ for (var i = 0; i < tabs.length; i++) {
   }
 
   (function init(){
-    renderLocal(); refreshOnline(); initBadge(); updateFlowIndex();
+    refreshMemory(); refreshOnline(); initBadge(); updateFlowIndex();
     // initial compute sooner than 60s
     setTimeout(updateFlowIndex, 3000);
   })();

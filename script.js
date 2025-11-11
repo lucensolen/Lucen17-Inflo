@@ -118,8 +118,6 @@ for (var i = 0; i < tabs.length; i++) {
     badge.classList.add('online');
   } catch (err) {
     badge.classList.remove('online');
-    // 🌀 Retry every 10 seconds until backend wakes
-    setTimeout(refreshOnline, 10000);
   }
 }
 

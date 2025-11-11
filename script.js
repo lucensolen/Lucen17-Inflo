@@ -11,6 +11,35 @@
   const $  = s => document.querySelector(s);
   const $$ = s => [...document.querySelectorAll(s)];
 
+  // Unified packet (what flows through the system)
+function mkPacket(partial) {
+  return Object.assign({
+    type: 'reflection',          // or 'image','note','metric'
+    text: '',
+    tone: 'Reflective',
+    media: null,                 // { url, kind:'image'|'audio' } optional
+    gate: null,                  // 'LearnLume','FarmOS', etc.
+    division: null,              // 'educationFlow' etc.
+    subject: null,               // e.g. 'Maths'
+    store: 'Local',              // 'Local'|'Global'|'Both'|'None'
+    show: 'None',                // gate key to visually notify or 'None'
+    origin: { deviceId: 'lucen17-inflo' },
+    ts: Date.now()
+  }, partial || {});
+}
+
+// Read per-entry router config
+function readEntryConfig(division, entry) {
+  const key = `lucen.division.${division}.entries.${entry}`;
+  const saved = JSON.parse(localStorage.getItem(key) || '{}');
+  return {
+    outMode:   saved.outMode   || 'None',
+    outTarget: saved.outTarget || 'None',
+    inMode:    saved.inMode    || 'None',
+    inSource:  saved.inSource  || 'None'
+  };
+}
+
   // Tabs switching (legacy-safe)
 var tabs = document.querySelectorAll('[data-tab]');
 var panels = document.querySelectorAll('.panel');

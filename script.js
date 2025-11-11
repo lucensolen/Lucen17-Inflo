@@ -359,34 +359,50 @@ async function refreshMemory() {
     } catch {}
   }
 
-  // Log reflection with routing
-  async function logReflection() {
-    const text = (ta?.value || '').trim();
-    if (!text) return alert('Enter a reflection first.');
-    const division = (divisionSelect?.value || 'core');
-    const tone  = classifyTone(text);
-    const entry = {
-      text, tone,
-      ts: new Date().toISOString(),
-      deviceId: "lucen17-inflo",
-      division,
-      location: null
-    };
+  // Log reflection with routing (router-enabled)
+async function logReflection() {
+  const text = (ta?.value || '').trim();
+  if (!text) return alert('Enter a reflection first.');
 
-    // backend
-    try {
-      const res = await postJSON(`${apiBase()}/memory`, entry);
-      if (!res.saved) console.warn('Backend save failed.');
-      badge.classList.add('online'); // confirms contact
-    } catch (e) {
-      // offline is fine; bubble will remain grey
-    }
+  const division = divisionSelect?.value || 'core';
+  const tone = classifyTone(text);
 
-    // local store (append)
-    const arr = JSON.parse(localStorage.getItem(memoryKey) || '[]');
-    arr.push(entry); if (arr.length > 5000) arr.splice(0, arr.length-5000);
-    localStorage.setItem(memoryKey, JSON.stringify(arr));
-    recalcHash();
+  const entry = {
+    text,
+    tone,
+    ts: new Date().toISOString(),
+    deviceId: 'lucen17-inflo',
+    division,
+    location: null
+  };
+
+  // Route by division config (use 'focusHours' as default entry)
+  const entryName = 'focusHours';
+  const cfg = readEntryConfig(division, entryName);
+
+  // Map UI toggles to packet fields
+  const pkt = mkPacket({
+    text: entry.text,
+    tone: entry.tone,
+    division,
+    subject: null,
+    gate: cfg.outTarget === 'None' ? null : cfg.outTarget,
+    store: cfg.outMode,          // Local | Global | Both | None
+    show: cfg.outTarget || 'None',
+    origin: { deviceId: 'lucen17-inflo' }
+  });
+
+  await dispatchPacket(pkt, entryName);
+
+  // Optional: keep core memory in sync for your cockpit view
+  const arr = JSON.parse(localStorage.getItem(memoryKey) || '[]');
+  arr.push({ text, tone, ts: Date.now(), division });
+  if (arr.length > 5000) arr.splice(0, arr.length - 5000);
+  localStorage.setItem(memoryKey, JSON.stringify(arr));
+
+  ta.value = ''; // clear input box
+  recalcHash();
+}
 
     // UI reset
     if (ta) { ta.value=''; ta.placeholder='✨ Logged!'; setTimeout(()=>ta.placeholder='Type reflection...', 900); }

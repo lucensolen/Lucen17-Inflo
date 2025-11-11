@@ -11,35 +11,6 @@
   const $  = s => document.querySelector(s);
   const $$ = s => [...document.querySelectorAll(s)];
 
-  // Unified packet (what flows through the system)
-function mkPacket(partial) {
-  return Object.assign({
-    type: 'reflection',          // or 'image','note','metric'
-    text: '',
-    tone: 'Reflective',
-    media: null,                 // { url, kind:'image'|'audio' } optional
-    gate: null,                  // 'LearnLume','FarmOS', etc.
-    division: null,              // 'educationFlow' etc.
-    subject: null,               // e.g. 'Maths'
-    store: 'Local',              // 'Local'|'Global'|'Both'|'None'
-    show: 'None',                // gate key to visually notify or 'None'
-    origin: { deviceId: 'lucen17-inflo' },
-    ts: Date.now()
-  }, partial || {});
-}
-
-// Read per-entry router config
-function readEntryConfig(division, entry) {
-  const key = `lucen.division.${division}.entries.${entry}`;
-  const saved = JSON.parse(localStorage.getItem(key) || '{}');
-  return {
-    outMode:   saved.outMode   || 'None',
-    outTarget: saved.outTarget || 'None',
-    inMode:    saved.inMode    || 'None',
-    inSource:  saved.inSource  || 'None'
-  };
-}
-
   // Tabs switching (legacy-safe)
 var tabs = document.querySelectorAll('[data-tab]');
 var panels = document.querySelectorAll('.panel');
@@ -53,85 +24,6 @@ for (var i = 0; i < tabs.length; i++) {
       panels[k].classList.toggle('active', panels[k].id === id);
     }
   });
-}
-
-// --- storage primitives ---
-function storeLocal(packet) {
-  const k = 'lucen.core.memory';
-  const arr = JSON.parse(localStorage.getItem(k) || '[]');
-  arr.push({ text: packet.text, tone: packet.tone, ts: packet.ts,
-             gate: packet.gate, division: packet.division, subject: packet.subject, type: packet.type });
-  if (arr.length > 5000) arr.splice(0, arr.length - 5000);
-  localStorage.setItem(k, JSON.stringify(arr));
-}
-
-async function storeGlobal(packet) {
-  try {
-    await fetch(`${apiBase()}/memory`, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        text: packet.text,
-        tone: packet.tone,
-        ts: packet.ts,
-        deviceId: packet.origin?.deviceId || 'web',
-        division: packet.division,
-        location: null
-      })
-    });
-  } catch(e) { /* offline tolerated */ }
-}
-
-function notifyGate(packet, gateKey) {
-  // UI/app notification – same-origin child apps or listening tabs
-  window.postMessage({ type:'lucenRoute', payload: Object.assign({}, packet, { notify: gateKey }) }, '*');
-}
-
-// --- effect pulses ---
-function pulseOutbound(division) {
-  pulseDot(coreDot, 'green');
-  pulseDot(getDivisionDot(division), 'green');
-}
-function pulseInbound(division) {
-  pulseDot(coreDot, 'cyan');
-  pulseDot(getDivisionDot(division), 'cyan');
-}
-
-// --- core dispatcher ---
-async function dispatchPacket(packet, entryName) {
-  // 1) store: Local / Global / Both / None
-  if (packet.store === 'Local' || packet.store === 'Both') storeLocal(packet);
-  if (packet.store === 'Global' || packet.store === 'Both') await storeGlobal(packet);
-
-  // 2) visual delivery: specific gate or None
-  if (packet.show && packet.show !== 'None') notifyGate(packet, packet.show);
-
-  // 3) beam + pulses
-  pulseOutbound(packet.division || 'educationFlow');
-  updateFlowIndex();
-}
-
-// --- inbound acceptance based on entry config ---
-async function acceptInbound(packet, division, entry) {
-  const cfg = readEntryConfig(division, entry);
-  const allowScope =
-    cfg.inMode === 'Both' ||
-    (cfg.inMode === 'Local'  && packet.origin?.deviceId === 'lucen17-inflo') ||
-    (cfg.inMode === 'Global' && packet.origin?.deviceId !== 'lucen17-inflo');
-
-  const allowSource =
-    cfg.inSource === 'None' ? false :
-    (cfg.inSource === 'Any' ? true  :
-     (packet.gate === cfg.inSource));
-
-  if (cfg.inMode === 'None') return;        // muted
-  if (!allowScope || !allowSource) return;  // filtered out
-
-  // Treat inbound like a store/show action but mark as inbound
-  if (cfg.inMode === 'Local' || cfg.inMode === 'Both') storeLocal(packet);
-  if (cfg.inMode === 'Global' || cfg.inMode === 'Both') await storeGlobal(packet);
-
-  pulseInbound(division);
-  updateFlowIndex();
 }
 
   // UI refs
@@ -291,26 +183,6 @@ async function acceptInbound(packet, division, entry) {
     if (list) list.innerHTML = html;
   }
 
-// === Memory Mode Toggle ===
-const memoryMode = document.getElementById('memoryMode');
-if (memoryMode) {
-  memoryMode.value = localStorage.getItem('lucen.memory.mode') || 'local';
-  memoryMode.addEventListener('change', () => {
-    localStorage.setItem('lucen.memory.mode', memoryMode.value);
-    refreshMemory();
-  });
-}
-
-// Unified refresh
-async function refreshMemory() {
-  const mode = localStorage.getItem('lucen.memory.mode') || 'local';
-  if (mode === 'global') {
-    await pullServerMemory();
-  } else {
-    renderLocal();
-  }
-}
-
   // Flow Index (0–99)
   function computeFlowIndex() {
     const arr = JSON.parse(localStorage.getItem(memoryKey) || '[]');
@@ -359,53 +231,37 @@ async function refreshMemory() {
     } catch {}
   }
 
-  // Log reflection with routing (router-enabled)
-async function logReflection() {
-  const text = (ta?.value || '').trim();
-  if (!text) return alert('Enter a reflection first.');
+  // Log reflection with routing
+  async function logReflection() {
+    const text = (ta?.value || '').trim();
+    if (!text) return alert('Enter a reflection first.');
+    const division = (divisionSelect?.value || 'core');
+    const tone  = classifyTone(text);
+    const entry = {
+      text, tone,
+      ts: new Date().toISOString(),
+      deviceId: "lucen17-inflo",
+      division,
+      location: null
+    };
 
-  const division = divisionSelect?.value || 'core';
-  const tone = classifyTone(text);
+    // backend
+    try {
+      const res = await postJSON(`${apiBase()}/memory`, entry);
+      if (!res.saved) console.warn('Backend save failed.');
+      badge.classList.add('online'); // confirms contact
+    } catch (e) {
+      // offline is fine; bubble will remain grey
+    }
 
-  const entry = {
-    text,
-    tone,
-    ts: new Date().toISOString(),
-    deviceId: 'lucen17-inflo',
-    division,
-    location: null
-  };
-
-  // Route by division config (use 'focusHours' as default entry)
-  const entryName = 'focusHours';
-  const cfg = readEntryConfig(division, entryName);
-
-  // Map UI toggles to packet fields
-  const pkt = mkPacket({
-    text: entry.text,
-    tone: entry.tone,
-    division,
-    subject: null,
-    gate: cfg.outTarget === 'None' ? null : cfg.outTarget,
-    store: cfg.outMode,          // Local | Global | Both | None
-    show: cfg.outTarget || 'None',
-    origin: { deviceId: 'lucen17-inflo' }
-  });
-
-  await dispatchPacket(pkt, entryName);
-
-  // Optional: keep core memory in sync for your cockpit view
-  const arr = JSON.parse(localStorage.getItem(memoryKey) || '[]');
-  arr.push({ text, tone, ts: Date.now(), division });
-  if (arr.length > 5000) arr.splice(0, arr.length - 5000);
-  localStorage.setItem(memoryKey, JSON.stringify(arr));
-
-  ta.value = ''; // clear input box
-  recalcHash();
-}
+    // local store (append)
+    const arr = JSON.parse(localStorage.getItem(memoryKey) || '[]');
+    arr.push(entry); if (arr.length > 5000) arr.splice(0, arr.length-5000);
+    localStorage.setItem(memoryKey, JSON.stringify(arr));
+    recalcHash();
 
     // UI reset
-    if (ta) { ; ta.placeholder='✨ Logged!'; setTimeout(()=>ta.placeholder='Type reflection...', 900); }
+    if (ta) { ta.value=''; ta.placeholder='✨ Logged!'; setTimeout(()=>ta.placeholder='Type reflection...', 900); }
     renderLocal(); updateFlowIndex();
 
     // Pulses
@@ -555,7 +411,7 @@ async function logReflection() {
   }
 
   (function init(){
-    refreshMemory(); refreshOnline(); initBadge(); updateFlowIndex();
+    renderLocal(); refreshOnline(); initBadge(); updateFlowIndex();
     // initial compute sooner than 60s
     setTimeout(updateFlowIndex, 3000);
   })();

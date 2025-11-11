@@ -11,6 +11,21 @@
   const $  = s => document.querySelector(s);
   const $$ = s => [...document.querySelectorAll(s)];
 
+  // Tabs switching (legacy-safe)
+var tabs = document.querySelectorAll('[data-tab]');
+var panels = document.querySelectorAll('.panel');
+for (var i = 0; i < tabs.length; i++) {
+  tabs[i].addEventListener('click', function () {
+    // remove active from all
+    for (var j = 0; j < tabs.length; j++) tabs[j].classList.remove('active');
+    this.classList.add('active');
+    var id = this.getAttribute('data-tab');
+    for (var k = 0; k < panels.length; k++) {
+      panels[k].classList.toggle('active', panels[k].id === id);
+    }
+  });
+}
+
   // UI refs
   const apiInput   = $('#apiBase');
   const saveApiBtn = $('#saveApi');

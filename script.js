@@ -55,6 +55,85 @@ for (var i = 0; i < tabs.length; i++) {
   });
 }
 
+// --- storage primitives ---
+function storeLocal(packet) {
+  const k = 'lucen.core.memory';
+  const arr = JSON.parse(localStorage.getItem(k) || '[]');
+  arr.push({ text: packet.text, tone: packet.tone, ts: packet.ts,
+             gate: packet.gate, division: packet.division, subject: packet.subject, type: packet.type });
+  if (arr.length > 5000) arr.splice(0, arr.length - 5000);
+  localStorage.setItem(k, JSON.stringify(arr));
+}
+
+async function storeGlobal(packet) {
+  try {
+    await fetch(`${apiBase()}/memory`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        text: packet.text,
+        tone: packet.tone,
+        ts: packet.ts,
+        deviceId: packet.origin?.deviceId || 'web',
+        division: packet.division,
+        location: null
+      })
+    });
+  } catch(e) { /* offline tolerated */ }
+}
+
+function notifyGate(packet, gateKey) {
+  // UI/app notification – same-origin child apps or listening tabs
+  window.postMessage({ type:'lucenRoute', payload: Object.assign({}, packet, { notify: gateKey }) }, '*');
+}
+
+// --- effect pulses ---
+function pulseOutbound(division) {
+  pulseDot(coreDot, 'green');
+  pulseDot(getDivisionDot(division), 'green');
+}
+function pulseInbound(division) {
+  pulseDot(coreDot, 'cyan');
+  pulseDot(getDivisionDot(division), 'cyan');
+}
+
+// --- core dispatcher ---
+async function dispatchPacket(packet, entryName) {
+  // 1) store: Local / Global / Both / None
+  if (packet.store === 'Local' || packet.store === 'Both') storeLocal(packet);
+  if (packet.store === 'Global' || packet.store === 'Both') await storeGlobal(packet);
+
+  // 2) visual delivery: specific gate or None
+  if (packet.show && packet.show !== 'None') notifyGate(packet, packet.show);
+
+  // 3) beam + pulses
+  pulseOutbound(packet.division || 'educationFlow');
+  updateFlowIndex();
+}
+
+// --- inbound acceptance based on entry config ---
+async function acceptInbound(packet, division, entry) {
+  const cfg = readEntryConfig(division, entry);
+  const allowScope =
+    cfg.inMode === 'Both' ||
+    (cfg.inMode === 'Local'  && packet.origin?.deviceId === 'lucen17-inflo') ||
+    (cfg.inMode === 'Global' && packet.origin?.deviceId !== 'lucen17-inflo');
+
+  const allowSource =
+    cfg.inSource === 'None' ? false :
+    (cfg.inSource === 'Any' ? true  :
+     (packet.gate === cfg.inSource));
+
+  if (cfg.inMode === 'None') return;        // muted
+  if (!allowScope || !allowSource) return;  // filtered out
+
+  // Treat inbound like a store/show action but mark as inbound
+  if (cfg.inMode === 'Local' || cfg.inMode === 'Both') storeLocal(packet);
+  if (cfg.inMode === 'Global' || cfg.inMode === 'Both') await storeGlobal(packet);
+
+  pulseInbound(division);
+  updateFlowIndex();
+}
+
   // UI refs
   const apiInput   = $('#apiBase');
   const saveApiBtn = $('#saveApi');

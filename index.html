@@ -78,11 +78,46 @@
         <h3>Field Ops <span class="dot" data-dot="fieldOps">•</span></h3>
         <p>Tracks physical work, land activity, and material flow.</p>
         <ul><li>Farm OS</li><li>Sovereign Field</li></ul>
-        <label>Focus Hours</label><input data-field="focusHours" type="number">
-        <label>Recent Wins</label><input data-field="wins" type="text">
-        <label>Blockers</label><input data-field="blockers" type="text">
-        <label>Mood / Tone</label><input data-field="mood" type="text">
-      </div>
+        <div class="entry" data-entry="focusHours">
+  <h4>Focus Hours</h4>
+
+  <!-- Outbound cluster -->
+  <div class="router">
+    <label>Send to:</label>
+    <select class="outMode">
+      <option>Local</option>
+      <option>Global</option>
+      <option>None</option>
+      <option>Beam#</option>
+    </select>
+    <select class="outTarget">
+      <option>None</option>
+      <option>LearnLume</option>
+      <option>MindSetFree</option>
+      <option>FarmOS</option>
+      <option>TeachEasy</option>
+    </select>
+  </div>
+
+  <!-- Inbound cluster -->
+  <div class="router">
+    <label>Receive from:</label>
+    <select class="inMode">
+      <option>Local</option>
+      <option>Global</option>
+      <option>None</option>
+    </select>
+    <select class="inSource">
+      <option>None</option>
+      <option>LearnLume</option>
+      <option>MindSetFree</option>
+      <option>FarmOS</option>
+      <option>TeachEasy</option>
+    </select>
+  </div>
+</div>
+
+     </div>
 
       <div class="division" data-division="selfSustain">
         <h3>Self-Sustain <span class="dot" data-dot="selfSustain">•</span></h3>

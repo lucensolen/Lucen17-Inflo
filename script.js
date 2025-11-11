@@ -405,7 +405,7 @@ async function logReflection() {
 }
 
     // UI reset
-    if (ta) { ta.value=''; ta.placeholder='✨ Logged!'; setTimeout(()=>ta.placeholder='Type reflection...', 900); }
+    if (ta) { ; ta.placeholder='✨ Logged!'; setTimeout(()=>ta.placeholder='Type reflection...', 900); }
     renderLocal(); updateFlowIndex();
 
     // Pulses

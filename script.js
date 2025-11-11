@@ -183,6 +183,26 @@ for (var i = 0; i < tabs.length; i++) {
     if (list) list.innerHTML = html;
   }
 
+// === Memory Mode Toggle ===
+const memoryMode = document.getElementById('memoryMode');
+if (memoryMode) {
+  memoryMode.value = localStorage.getItem('lucen.memory.mode') || 'local';
+  memoryMode.addEventListener('change', () => {
+    localStorage.setItem('lucen.memory.mode', memoryMode.value);
+    refreshMemory();
+  });
+}
+
+// Unified refresh
+async function refreshMemory() {
+  const mode = localStorage.getItem('lucen.memory.mode') || 'local';
+  if (mode === 'global') {
+    await pullServerMemory();
+  } else {
+    renderLocal();
+  }
+}
+
   // Flow Index (0–99)
   function computeFlowIndex() {
     const arr = JSON.parse(localStorage.getItem(memoryKey) || '[]');

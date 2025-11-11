@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Lucen17-Inflo</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+  <header class="topbar">
+    <h1>Lucen17-Inflo</h1>
+    <div class="beam" id="beam"></div>
+    <div class="status">
+      <span id="onlineBadge">
+        <span id="coreSyncDot">•</span>
+        <span id="flowIndex">--</span>
+      </span>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button data-tab="core" class="active">Core</button>
+    <button data-tab="divisions">Divisions</button>
+    <button data-tab="gates">Gates</button>
+  </nav>
+
+  <main>
+    <section class="panel active" id="core">
+      <div class="controls">
+        <div class="slider">
+          <label>Remembrance ⇄ Creation</label>
+          <input id="dialRC" type="range" min="0" max="100" value="50"/>
+        </div>
+        <div class="slider">
+          <label>Generation ⇄ Evolution</label>
+          <input id="dialGE" type="range" min="0" max="100" value="50"/>
+        </div>
+        <div class="mode">
+          <label>Mode</label>
+          <div class="mode-buttons">
+            <button id="modeCreation">Creation</button>
+            <button id="modeGuidance" class="active">Guidance</button>
+          </div>
+        </div>
+      </div>
+
+      <h2>Vision Lens</h2>
+      <div class="row">
+        <label for="divisionSelect">Route to</label>
+        <select id="divisionSelect">
+          <option value="fieldOps">Field Ops</option>
+          <option value="selfSustain">Self-Sustain</option>
+          <option value="mindRhythm">Mind Rhythm</option>
+          <option value="educationFlow">Education Flow</option>
+          <option value="creativeOps">Creative Ops</option>
+          <option value="socialResonance">Social Resonance</option>
+          <option value="ecoSystems">Eco Systems</option>
+          <option value="businessLine">Business Line</option>
+        </select>
+      </div>
+      <textarea id="visionInput" placeholder="Type reflection..." rows="4"></textarea>
+      <div class="row">
+        <button id="logBtn">Log to Lucen Memory</button>
+      </div>
+      <h3>Lucen Memory</h3>
+      <div id="memoryList" class="list"></div>
+    </section>
+
+    <section class="panel" id="divisions">
+      <h2>Divisions</h2>
+
+      <div class="division" data-division="fieldOps">
+        <h3>Field Ops <span class="dot" data-dot="fieldOps">•</span></h3>
+        <p>Tracks physical work, land activity, and material flow.</p>
+        <ul><li>Farm OS</li><li>Sovereign Field</li></ul>
+        <label>Focus Hours</label><input data-field="focusHours" type="number">
+        <label>Recent Wins</label><input data-field="wins" type="text">
+        <label>Blockers</label><input data-field="blockers" type="text">
+        <label>Mood / Tone</label><input data-field="mood" type="text">
+      </div>
+
+      <div class="division" data-division="selfSustain">
+        <h3>Self-Sustain <span class="dot" data-dot="selfSustain">•</span></h3>
+        <p>Monitors resources, finance, and personal autonomy.</p>
+        <ul><li>Purchase Tracker</li><li>Maintenance Manager</li></ul>
+        <label>Focus Hours</label><input data-field="focusHours" type="number">
+        <label>Recent Wins</label><input data-field="wins" type="text">
+        <label>Blockers</label><input data-field="blockers" type="text">
+        <label>Mood / Tone</label><input data-field="mood" type="text">
+      </div>
+
+      <div class="division" data-division="mindRhythm">
+        <h3>Mind Rhythm <span class="dot" data-dot="mindRhythm">•</span></h3>
+        <p>Focus, clarity, and emotional rhythm tracking.</p>
+        <ul><li>MindSetFree</li><li>MindIron</li></ul>
+        <label>Focus Hours</label><input data-field="focusHours" type="number">
+        <label>Recent Wins</label><input data-field="wins" type="text">
+        <label>Blockers</label><input data-field="blockers" type="text">
+        <label>Mood / Tone</label><input data-field="mood" type="text">
+      </div>
+
+      <div class="division" data-division="educationFlow">
+        <h3>Education Flow <span class="dot" data-dot="educationFlow">•</span></h3>
+        <p>Tracks learning evolution and educational evidence.</p>
+        <ul><li>Learn Lume</li><li>TeachEasy</li></ul>
+        <label>Focus Hours</label><input data-field="focusHours" type="number">
+        <label>Recent Wins</label><input data-field="wins" type="text">
+        <label>Blockers</label><input data-field="blockers" type="text">
+        <label>Mood / Tone</label><input data-field="mood" type="text">
+      </div>
+
+      <div class="division" data-division="creativeOps">
+        <h3>Creative Ops <span class="dot" data-dot="creativeOps">•</span></h3>
+        <p>Creative development, design, and brand motion.</p>
+        <ul><li>BrandBull</li><li>PlanMore</li></ul>
+        <label>Focus Hours</label><input data-field="focusHours" type="number">
+        <label>Recent Wins</label><input data-field="wins" type="text">
+        <label>Blockers</label><input data-field="blockers" type="text">
+        <label>Mood / Tone</label><input data-field="mood" type="text">
+      </div>
+
+      <div class="division" data-division="socialResonance">
+        <h3>Social Resonance <span class="dot" data-dot="socialResonance">•</span></h3>
+        <p>Communication, outreach, and collaboration cadence.</p>
+        <ul><li>Coach Buddy</li><li>Business Portal</li></ul>
+        <label>Focus Hours</label><input data-field="focusHours" type="number">
+        <label>Recent Wins</label><input data-field="wins" type="text">
+        <label>Blockers</label><input data-field="blockers" type="text">
+        <label>Mood / Tone</label><input data-field="mood" type="text">
+      </div>
+
+      <div class="division" data-division="ecoSystems">
+        <h3>Eco Systems <span class="dot" data-dot="ecoSystems">•</span></h3>
+        <p>Integrates sustainability and environmental flow.</p>
+        <ul><li>Farm OS</li><li>RealStates</li></ul>
+        <label>Focus Hours</label><input data-field="focusHours" type="number">
+        <label>Recent Wins</label><input data-field="wins" type="text">
+        <label>Blockers</label><input data-field="blockers" type="text">
+        <label>Mood / Tone</label><input data-field="mood" type="text">
+      </div>
+
+      <div class="division" data-division="businessLine">
+        <h3>Business Line <span class="dot" data-dot="businessLine">•</span></h3>
+        <p>Tracks projects, outreach, and business lifelines.</p>
+        <ul><li>Business Portal</li><li>SingleSolutions</li></ul>
+        <label>Focus Hours</label><input data-field="focusHours" type="number">
+        <label>Recent Wins</label><input data-field="wins" type="text">
+        <label>Blockers</label><input data-field="blockers" type="text">
+        <label>Mood / Tone</label><input data-field="mood" type="text">
+      </div>
+    </section>
+
+    <section class="panel" id="gates">
+      <h2>Gates</h2>
+      <div class="row">
+        <label>Backend Link</label>
+        <input id="apiBase" type="url" placeholder="https://lucen17-backend.onrender.com">
+        <button id="saveApi">Save</button>
+      </div>
+
+      <div class="row">
+        <label>Pay Toll</label>
+        <input id="payAmount" type="number" value="3">
+        <select id="payGate">
+          <option value="dara">Dara Gate</option>
+          <option value="vara">Vara Gate</option>
+        </select>
+        <button id="payBtn">Pay Toll</button>
+      </div>
+
+      <div id="gatesList" class="list"></div>
+    </section>
+  </main>
+
+  <script src="lucen.signal.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

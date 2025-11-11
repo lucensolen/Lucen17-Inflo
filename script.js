@@ -411,6 +411,25 @@ for (var i = 0; i < tabs.length; i++) {
     updateFlowIndex();
   }
 
+  // === Refresh Memory Mode (Local vs Global) ===
+async function refreshMemory() {
+  const memoryMode = localStorage.getItem('lucen.memoryMode') || 'Local';
+
+  try {
+    if (memoryMode === 'Global') {
+      const res = await fetch(`${apiBase()}/memory`, { cache: 'no-store' });
+      if (!res.ok) throw new Error('Fetch failed');
+      const data = await res.json();
+      renderGlobal(data);
+    } else {
+      renderLocal();
+    }
+  } catch (err) {
+    console.warn('Memory refresh failed, falling back to local:', err.message);
+    renderLocal();
+  }
+}
+
   (function init(){
     refreshMemory(); refreshOnline(); initBadge(); updateFlowIndex();
     // initial compute sooner than 60s

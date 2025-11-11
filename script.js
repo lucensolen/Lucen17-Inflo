@@ -112,13 +112,16 @@ for (var i = 0; i < tabs.length; i++) {
   if (savedAPI && apiInput) apiInput.value = savedAPI;
 
   async function refreshOnline() {
-    if (!badge) return;
-    try {
-      const h = await getJSON(`${apiBase()}/health`);
-      if (h && h.ok) { badge.classList.add('online'); await refreshGates(); await pullServerMemory(); }
-      else { badge.classList.remove('online'); }
-    } catch { badge.classList.remove('online'); }
+  try {
+    const res = await fetch(`${apiBase()}/health`, { cache: 'no-store' });
+    if (!res.ok) throw new Error('Bad status');
+    badge.classList.add('online');
+  } catch (err) {
+    badge.classList.remove('online');
+    // 🌀 Retry every 10 seconds until backend wakes
+    setTimeout(refreshOnline, 10000);
   }
+}
 
   async function refreshGates() {
     if (!gatesList) return;

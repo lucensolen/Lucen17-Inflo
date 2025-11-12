@@ -426,7 +426,9 @@ window.addEventListener("DOMContentLoaded", () => {
       const items = Array.isArray(data) ? data : (data.items || []);
       const html = (items || []).slice().reverse().map(i => {
         const color = toneColor(i.tone || 'Reflective');
-        const ts = (i.ts ? new Date(i.ts) : new Date()).toLocaleString();
+        const ts = i.ts && !isNaN(Date.parse(i.ts))
+  ? new Date(i.ts).toLocaleString()
+  : '(no timestamp)';
         return `<div class="card">
           <div class="tone">${i.tone || 'Reflective'}</div>
           <div class="ts">${ts}</div>

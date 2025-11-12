@@ -75,7 +75,7 @@ app.post("/memory", async (req, res) => {
   const entry = {
     text: String(text).slice(0,4000),
     tone: tone || inferTone(text),
-    ts: Number(ts) || Date.now(),
+    ts: ts || new Date().toISOString(),
     deviceId: deviceId || "web",
     division: division || null,
     location: location || null

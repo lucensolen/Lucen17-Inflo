@@ -487,5 +487,6 @@
     initBadge(); 
     updateFlowIndex();
     setTimeout(updateFlowIndex, 3000);
+    refreshGates().catch(() => renderGatesUI(lucenGates));
   })();
 })();

@@ -411,6 +411,37 @@ for (var i = 0; i < tabs.length; i++) {
     updateFlowIndex();
   }
 
+  // === Render Global Memory (from backend) ===
+async function renderGlobal(data) {
+  try {
+    if (!data) {
+      const res = await fetch(`${apiBase()}/memory`, { cache: 'no-store' });
+      if (!res.ok) throw new Error('Failed to load memory');
+      data = await res.json();
+    }
+
+    const list = $('#memoryList');
+    list.innerHTML = '';
+
+    // Build the reflections list (limit to 100)
+    data.slice(-100).reverse().forEach(item => {
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <span class="tone ${item.tone?.toLowerCase() || 'neutral'}">${item.tone || 'Unknown'}</span>
+        <span class="division">${item.division || 'core'}</span>
+        <p>${item.text || ''}</p>
+        <time>${new Date(item.ts).toLocaleString()}</time>
+      `;
+      list.appendChild(li);
+    });
+
+    console.log(`🟢 Rendered ${data.length} reflections from backend`);
+  } catch (err) {
+    console.error('⚠️ Global memory render failed:', err.message);
+    renderLocal();
+  }
+}
+
   // === Refresh Memory Mode (Local vs Global) ===
 async function refreshMemory() {
   const memoryMode = localStorage.getItem('lucen.memoryMode') || 'Local';

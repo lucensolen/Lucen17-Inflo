@@ -54,3 +54,24 @@ button:hover{background:#243246}
 .gate-card{display:flex;align-items:center;gap:10px;justify-content:space-between}
 .gate-meta{display:flex;align-items:center;gap:8px}
 .gate-dot{font-size:14px}
+
+.dot {
+  font-size: 18px;
+  color: #888;
+  transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+.dot.green {
+  color: #4caf50;
+  text-shadow: 0 0 6px #4caf50;
+}
+
+.dot.cyan {
+  color: #00e5ff;
+  text-shadow: 0 0 6px #00e5ff;
+}
+
+.dot.idle {
+  color: #777;
+  text-shadow: none;
+}

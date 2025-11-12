@@ -43,12 +43,45 @@ let pool = null;
 let dbReady = false;
 if (process.env.DATABASE_URL) {
   pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
-  pool.query(`CREATE TABLE IF NOT EXISTS reflections (
-    id SERIAL PRIMARY KEY,
-    text TEXT, tone TEXT, ts BIGINT, deviceId TEXT, division TEXT, location TEXT
-  );`).then(()=>{ dbReady = true; console.log("DB ready ✅"); })
+
+  // Initial base table
+  pool.query(`
+    CREATE TABLE IF NOT EXISTS reflections (
+      id SERIAL PRIMARY KEY,
+      text TEXT,
+      tone TEXT,
+      ts BIGINT,
+      deviceId TEXT,
+      division TEXT,
+      location TEXT
+    );
+  `)
+  .then(async () => {
+    dbReady = true;
+    console.log("DB ready ✅");
+
+    // --- auto-migrate missing columns ---
+    try {
+      const cols = await pool.query(`
+        SELECT column_name FROM information_schema.columns WHERE table_name='reflections';
+      `);
+      const existing = cols.rows.map(r => r.column_name);
+      const toAdd = [];
+      if (!existing.includes("division")) toAdd.push("ADD COLUMN division TEXT");
+      if (!existing.includes("gate")) toAdd.push("ADD COLUMN gate TEXT");
+      if (toAdd.length) {
+        await pool.query(`ALTER TABLE reflections ${toAdd.join(", ")};`);
+        console.log("[DB] Schema updated:", toAdd.join(", "));
+      } else {
+        console.log("[DB] Schema already up to date.");
+      }
+    } catch (e) {
+      console.error("[DB] Schema migration error:", e.message);
+    }
+  })
   .catch(err => console.error("DB init error:", err));
 }
+
 
 // Optional Stripe
 if (process.env.STRIPE_SECRET_KEY) stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);

@@ -12,19 +12,18 @@
   const $$ = s => [...document.querySelectorAll(s)];
 
   // Tabs switching (legacy-safe)
-var tabs = document.querySelectorAll('[data-tab]');
-var panels = document.querySelectorAll('.panel');
-for (var i = 0; i < tabs.length; i++) {
-  tabs[i].addEventListener('click', function () {
-    // remove active from all
-    for (var j = 0; j < tabs.length; j++) tabs[j].classList.remove('active');
-    this.classList.add('active');
-    var id = this.getAttribute('data-tab');
-    for (var k = 0; k < panels.length; k++) {
-      panels[k].classList.toggle('active', panels[k].id === id);
-    }
-  });
-}
+  var tabs = document.querySelectorAll('[data-tab]');
+  var panels = document.querySelectorAll('.panel');
+  for (var i = 0; i < tabs.length; i++) {
+    tabs[i].addEventListener('click', function () {
+      for (var j = 0; j < tabs.length; j++) tabs[j].classList.remove('active');
+      this.classList.add('active');
+      var id = this.getAttribute('data-tab');
+      for (var k = 0; k < panels.length; k++) {
+        panels[k].classList.toggle('active', panels[k].id === id);
+      }
+    });
+  }
 
   // UI refs
   const apiInput   = $('#apiBase');
@@ -40,6 +39,8 @@ for (var i = 0; i < tabs.length; i++) {
   const payAmount  = $('#payAmount');
   const payGate    = $('#payGate');
   const divisionSelect = $('#divisionSelect');
+  // FIX: memory mode dropdown (must exist in HTML; values "Local" / "Global")
+  const memoryModeSelect = $('#memoryMode');
 
   const dialRC       = $('#dialRC');
   const dialGE       = $('#dialGE');
@@ -105,21 +106,21 @@ for (var i = 0; i < tabs.length; i++) {
     { name:'PlanMore',    key:'planmore', url:'https://placeholder.local/planmore' },
     { name:'DietDiary',   key:'diet',     url:'https://placeholder.local/dietdiary' },
     { name:'LearnLume',   key:'learn',    url:'https://placeholder.local/learnlume' }
-    ];
+  ];
 
   // Online badge + server memory
   const savedAPI = localStorage.getItem(apiKey);
   if (savedAPI && apiInput) apiInput.value = savedAPI;
 
   async function refreshOnline() {
-  try {
-    const res = await fetch(`${apiBase()}/health`, { cache: 'no-store' });
-    if (!res.ok) throw new Error('Bad status');
-    badge.classList.add('online');
-  } catch (err) {
-    badge.classList.remove('online');
+    try {
+      const res = await fetch(`${apiBase()}/health`, { cache: 'no-store' });
+      if (!res.ok) throw new Error('Bad status');
+      badge.classList.add('online');
+    } catch (err) {
+      badge.classList.remove('online');
+    }
   }
-}
 
   async function refreshGates() {
     if (!gatesList) return;
@@ -215,7 +216,6 @@ for (var i = 0; i < tabs.length; i++) {
   // Map division -> gate dots keys
   function gateKeysForDivision(div) {
     const names = divisionGateMap[div] || [];
-    // translate friendly names into gate keys where possible
     const map = { MindSetFree:'mindset', PlanMore:'planmore', DietDiary:'diet', LearnLume:'learn',
                   CoachBuddy:'coachbuddy', BusinessPortal:'business', TeachEasy:'teacheasy',
                   PurchaseTracker:'purchase', MaintenanceManager:'maintenance', RealStates:'realstates',
@@ -232,7 +232,7 @@ for (var i = 0; i < tabs.length; i++) {
     } catch {}
   }
 
-  // Log reflection with routing
+  // Log reflection with routing (direct post + local append)
   async function logReflection() {
     const text = (ta?.value || '').trim();
     if (!text) return alert('Enter a reflection first.');
@@ -405,65 +405,87 @@ for (var i = 0; i < tabs.length; i++) {
 
   // Init
   function initBadge(){
-    // build cluster contents if missing (dot + number only)
     if (!coreDot) return;
     coreDot.classList.add('idle');
     updateFlowIndex();
   }
 
   // === Render Global Memory (from backend) ===
-async function renderGlobal(data) {
-  try {
-    if (!data) {
-      const res = await fetch(`${apiBase()}/memory`, { cache: 'no-store' });
-      if (!res.ok) throw new Error('Failed to load memory');
-      data = await res.json();
-    }
-
-    const list = $('#memoryList');
-    list.innerHTML = '';
-
-    // Build the reflections list (limit to 100)
-    data.slice(-100).reverse().forEach(item => {
-      const li = document.createElement('li');
-      li.innerHTML = `
-        <span class="tone ${item.tone?.toLowerCase() || 'neutral'}">${item.tone || 'Unknown'}</span>
-        <span class="division">${item.division || 'core'}</span>
-        <p>${item.text || ''}</p>
-        <time>${new Date(item.ts).toLocaleString()}</time>
-      `;
-      list.appendChild(li);
-    });
-
-    console.log(`🟢 Rendered ${data.length} reflections from backend`);
-  } catch (err) {
-    console.error('⚠️ Global memory render failed:', err.message);
-    renderLocal();
-  }
-}
-
-  // === Refresh Memory Mode (Local vs Global) ===
-async function refreshMemory() {
-  const memoryMode = localStorage.getItem('lucen.memoryMode') || 'Local';
-
-  try {
-    if (memoryMode === 'Global') {
-      const res = await fetch(`${apiBase()}/memory`, { cache: 'no-store' });
-      if (!res.ok) throw new Error('Fetch failed');
-      const data = await res.json();
-      renderGlobal(data);
-    } else {
+  async function renderGlobal(data) {
+    try {
+      // Accept pre-fetched or pull fresh
+      if (!data) {
+        const res = await fetch(`${apiBase()}/memory`, { cache: 'no-store' });
+        if (!res.ok) throw new Error('Failed to load memory');
+        data = await res.json();
+      }
+      const items = Array.isArray(data) ? data : (data.items || []);
+      const html = (items || []).slice().reverse().map(i => {
+        const color = toneColor(i.tone || 'Reflective');
+        const ts = (i.ts ? new Date(i.ts) : new Date()).toLocaleString();
+        return `<div class="card">
+          <div class="tone">${i.tone || 'Reflective'}</div>
+          <div class="ts">${ts}</div>
+          <div class="txt">${escapeHtml(i.text || '')}</div>
+          <div class="node ${color}"></div>
+        </div>`;
+      }).join('');
+      if (list) list.innerHTML = html;
+      console.log(`🟢 Rendered ${items.length || 0} reflections from backend`);
+    } catch (err) {
+      console.error('⚠️ Global memory render failed:', err.message);
       renderLocal();
     }
-  } catch (err) {
-    console.warn('Memory refresh failed, falling back to local:', err.message);
-    renderLocal();
   }
-}
+
+  // === Refresh Memory Mode (Local vs Global) ===
+  async function refreshMemory() {
+    // FIX: single source of truth for mode
+    const memoryMode = localStorage.getItem('lucen.memoryMode') || 'Local';
+    // reflect dropdown visually (if present)
+    if (memoryModeSelect) memoryModeSelect.value = memoryMode;
+
+    try {
+      if (memoryMode === 'Global') {
+        const res = await fetch(`${apiBase()}/memory`, { cache: 'no-store' });
+        if (!res.ok) throw new Error('Fetch failed');
+        const data = await res.json();
+        await renderGlobal(data);
+      } else {
+        renderLocal();
+      }
+    } catch (err) {
+      console.warn('Memory refresh failed, falling back to local:', err.message);
+      renderLocal();
+    }
+  }
+
+  // FIX: memory mode dropdown handler (minimal, no extras)
+  if (memoryModeSelect) {
+    // ensure values are "Local"/"Global"; if lowercase in HTML, normalize
+    const v = (memoryModeSelect.value || 'Local');
+    memoryModeSelect.value = (v === 'global' ? 'Global' : v === 'local' ? 'Local' : v);
+
+    memoryModeSelect.addEventListener('change', async () => {
+      const mode = memoryModeSelect.value === 'global' ? 'Global'
+                 : memoryModeSelect.value === 'local'  ? 'Local'
+                 : memoryModeSelect.value;
+      localStorage.setItem('lucen.memoryMode', mode);
+      console.log('🟣 Memory mode changed to:', mode);
+      await refreshMemory();
+    });
+  }
 
   (function init(){
-    refreshMemory(); refreshOnline(); initBadge(); updateFlowIndex();
-    // initial compute sooner than 60s
+    // On load, set dropdown from storage (if present), then render
+    if (memoryModeSelect) {
+      const saved = localStorage.getItem('lucen.memoryMode') || 'Local';
+      memoryModeSelect.value = saved;
+    }
+    refreshMemory(); 
+    refreshOnline(); 
+    initBadge(); 
+    updateFlowIndex();
     setTimeout(updateFlowIndex, 3000);
   })();
 })();

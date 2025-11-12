@@ -105,7 +105,7 @@ for (var i = 0; i < tabs.length; i++) {
     { name:'PlanMore',    key:'planmore', url:'https://placeholder.local/planmore' },
     { name:'DietDiary',   key:'diet',     url:'https://placeholder.local/dietdiary' },
     { name:'LearnLume',   key:'learn',    url:'https://placeholder.local/learnlume' }
-    };
+    ];
 
   // Online badge + server memory
   const savedAPI = localStorage.getItem(apiKey);

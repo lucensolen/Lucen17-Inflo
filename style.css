@@ -57,21 +57,9 @@ button:hover{background:#243246}
 
 .dot {
   font-size: 18px;
-  color: #888;
+  color: #777;
   transition: color 0.3s ease, text-shadow 0.3s ease;
 }
-
-.dot.green {
-  color: #4caf50;
-  text-shadow: 0 0 6px #4caf50;
-}
-
-.dot.cyan {
-  color: #00e5ff;
-  text-shadow: 0 0 6px #00e5ff;
-}
-
-.dot.idle {
-  color: #777;
-  text-shadow: none;
-}
+.dot.green { color: #4caf50; text-shadow: 0 0 6px #4caf50; }
+.dot.cyan  { color: #00e5ff; text-shadow: 0 0 6px #00e5ff; }
+.dot.idle  { color: #777; text-shadow: none; }

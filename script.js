@@ -29,7 +29,6 @@
   const apiInput   = $('#apiBase');
   const saveApiBtn = $('#saveApi');
   const badge      = $('#onlineBadge');
-  const coreDot    = $('#coreSyncDot');
   const flowNum    = $('#flowIndex');
   const logBtn     = $('#logBtn');
   const ta         = $('#visionInput');
@@ -39,6 +38,11 @@
   const payAmount  = $('#payAmount');
   const payGate    = $('#payGate');
   const divisionSelect = $('#divisionSelect');
+  let coreDot;
+window.addEventListener("DOMContentLoaded", () => {
+  coreDot = document.getElementById("coreSyncDot");
+});
+
   // FIX: memory mode dropdown (must exist in HTML; values "Local" / "Global")
   const memoryModeSelect = $('#memoryMode');
 

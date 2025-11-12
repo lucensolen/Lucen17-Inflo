@@ -459,6 +459,7 @@ async function refreshMemory() {
     console.warn('Memory refresh failed, falling back to local:', err.message);
     renderLocal();
   }
+}
 
   (function init(){
     refreshMemory(); refreshOnline(); initBadge(); updateFlowIndex();
